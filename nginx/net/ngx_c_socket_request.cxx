@@ -23,7 +23,7 @@
 #include "ngx_c_lockmutex.h"  //自动释放互斥量的一个类
 
 //来数据时候的处理，当连接上有数据来的时候，本函数会被ngx_epoll_process_events()所调用  ,官方的类似函数为ngx_http_wait_request_handler();
-void CSocekt::ngx_read_request_handler(lpngx_connection_t pConn)
+void CSocket::ngx_read_request_handler(lpngx_connection_t pConn)
 {  
     bool isflood = false; //是否flood攻击；
 
@@ -114,7 +114,7 @@ void CSocekt::ngx_read_request_handler(lpngx_connection_t pConn)
     return;
 }
 
-ssize_t CSocekt::recvproc(lpngx_connection_t pConn,char *buff,ssize_t buflen)  //ssize_t是有符号整型，在32位机器上等同与int，在64位机器上等同与long int，size_t就是无符号型的ssize_t
+ssize_t CSocket::recvproc(lpngx_connection_t pConn,char *buff,ssize_t buflen)  //ssize_t是有符号整型，在32位机器上等同与int，在64位机器上等同与long int，size_t就是无符号型的ssize_t
 {
     ssize_t n;
     
@@ -155,7 +155,7 @@ ssize_t CSocekt::recvproc(lpngx_connection_t pConn,char *buff,ssize_t buflen)  /
 
 //包头收完整后的处理，我们称为包处理阶段1【p1】：写成函数，方便复用
 //注意参数isflood是个引用
-void CSocekt::ngx_wait_request_handler_proc_p1(lpngx_connection_t pConn,bool &isflood)
+void CSocket::ngx_wait_request_handler_proc_p1(lpngx_connection_t pConn,bool &isflood)
 {    
     CMemory *p_memory = CMemory::GetInstance();		
 
@@ -215,7 +215,7 @@ void CSocekt::ngx_wait_request_handler_proc_p1(lpngx_connection_t pConn,bool &is
 }
 
 //注意参数isflood是个引用
-void CSocekt::ngx_wait_request_handler_proc_plast(lpngx_connection_t pConn,bool &isflood)
+void CSocket::ngx_wait_request_handler_proc_plast(lpngx_connection_t pConn,bool &isflood)
 {
 
     if(isflood == false)
@@ -241,7 +241,7 @@ void CSocekt::ngx_wait_request_handler_proc_plast(lpngx_connection_t pConn,bool 
 //=0，估计对方断了
 //-1，errno == EAGAIN ，本方发送缓冲区满了
 //-2，errno != EAGAIN != EWOULDBLOCK != EINTR ，一般我认为都是对端断开的错误
-ssize_t CSocekt::sendproc(lpngx_connection_t c,char *buff,ssize_t size)  //ssize_t是有符号整型，在32位机器上等同与int，在64位机器上等同与long int，size_t就是无符号型的ssize_t
+ssize_t CSocket::sendproc(lpngx_connection_t c,char *buff,ssize_t size)  //ssize_t是有符号整型，在32位机器上等同与int，在64位机器上等同与long int，size_t就是无符号型的ssize_t
 {
     //这里参考借鉴了官方nginx函数ngx_unix_send()的写法
     ssize_t   n;
@@ -282,7 +282,7 @@ ssize_t CSocekt::sendproc(lpngx_connection_t c,char *buff,ssize_t size)  //ssize
 
 //设置数据发送时的写处理函数,当数据可写时epoll通知我们，我们在 int CSocekt::ngx_epoll_process_events(int timer)  中调用此函数
 //能走到这里，数据就是没法送完毕，要继续发送
-void CSocekt::ngx_write_request_handler(lpngx_connection_t pConn)
+void CSocket::ngx_write_request_handler(lpngx_connection_t pConn)
 {      
     CMemory *p_memory = CMemory::GetInstance();
     
@@ -336,7 +336,7 @@ void CSocekt::ngx_write_request_handler(lpngx_connection_t pConn)
 }
 
 //         消息本身格式【消息头+包头+包体】 
-void CSocekt::threadRecvProcFunc(char *pMsgBuf)
+void CSocket::threadRecvProcFunc(char *pMsgBuf)
 {   
     return;
 }

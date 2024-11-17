@@ -74,7 +74,7 @@ void ngx_connection_s::PutOneToFree()
 
 //---------------------------------------------------------------
 //初始化连接池
-void CSocekt::initconnection()
+void CSocket::initconnection()
 {
     lpngx_connection_t p_Conn;
     CMemory *p_memory = CMemory::GetInstance();   
@@ -94,7 +94,7 @@ void CSocekt::initconnection()
 }
 
 //最终回收连接池，释放内存
-void CSocekt::clearconnection()
+void CSocket::clearconnection()
 {
     lpngx_connection_t p_Conn;
 	CMemory *p_memory = CMemory::GetInstance();
@@ -109,7 +109,7 @@ void CSocekt::clearconnection()
 }
 
 //从连接池中获取一个空闲连接【当一个客户端连接TCP进入，我希望把这个连接和我的 连接池中的 一个连接【对象】绑到一起，后续 我可以通过这个连接，把这个对象拿到，因为对象里边可以记录各种信息】
-lpngx_connection_t CSocekt::ngx_get_connection(int isock)
+lpngx_connection_t CSocket::ngx_get_connection(int isock)
 {
     //因为可能有其他线程要访问m_freeconnectionList，m_connectionList【比如可能有专门的释放线程要释放/或者主线程要释放】之类的，所以应该临界一下
     CLock lock(&m_connectionMutex);  
@@ -138,7 +138,7 @@ lpngx_connection_t CSocekt::ngx_get_connection(int isock)
 }
 
 //归还参数pConn所代表的连接到到连接池中，注意参数类型是lpngx_connection_t
-void CSocekt::ngx_free_connection(lpngx_connection_t pConn) 
+void CSocket::ngx_free_connection(lpngx_connection_t pConn) 
 {
     //因为有线程可能要动连接池中连接，所以在合理互斥也是必要的
     CLock lock(&m_connectionMutex);  
@@ -158,7 +158,7 @@ void CSocekt::ngx_free_connection(lpngx_connection_t pConn)
 
 //将要回收的连接放到一个队列中来，后续有专门的线程会处理这个队列中的连接的回收
 //有些连接，我们不希望马上释放，要隔一段时间后再释放以确保服务器的稳定，所以，我们把这种隔一段时间才释放的连接先放到一个队列中来
-void CSocekt::inRecyConnectQueue(lpngx_connection_t pConn)
+void CSocket::inRecyConnectQueue(lpngx_connection_t pConn)
 {
     //ngx_log_stderr(0,"哎呀我去");
 
@@ -193,10 +193,10 @@ void CSocekt::inRecyConnectQueue(lpngx_connection_t pConn)
 }
 
 //处理连接回收的线程
-void* CSocekt::ServerRecyConnectionThread(void* threadData)
+void* CSocket::ServerRecyConnectionThread(void* threadData)
 {
     ThreadItem *pThread = static_cast<ThreadItem*>(threadData);
-    CSocekt *pSocketObj = pThread->_pThis;
+    CSocket *pSocketObj = pThread->_pThis;
     
     time_t currtime;
     int err;
@@ -280,7 +280,7 @@ lblRRTD:
     return (void*)0;
 }
 
-void CSocekt::ngx_close_connection(lpngx_connection_t pConn)
+void CSocket::ngx_close_connection(lpngx_connection_t pConn)
 {    
     ngx_free_connection(pConn); 
     if(pConn->fd != -1)

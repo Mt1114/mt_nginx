@@ -19,9 +19,9 @@
 
 typedef struct ngx_listening_s   ngx_listening_t, *lpngx_listening_t;
 typedef struct ngx_connection_s  ngx_connection_t,*lpngx_connection_t;
-typedef class  CSocekt           CSocekt;
+typedef class  CSocket           CSocket;
 
-typedef void (CSocekt::*ngx_event_handler_pt)(lpngx_connection_t c); //定义成员函数指针
+typedef void (CSocket::*ngx_event_handler_pt)(lpngx_connection_t c); //定义成员函数指针
 
 //--------------------------------------------
 //一些专用结构定义放在这里，暂时不考虑放ngx_global.h里了
@@ -98,11 +98,11 @@ typedef struct _STRUC_MSG_HEADER
 
 //------------------------------------
 //socket相关类
-class CSocekt
+class CSocket
 {
 public:
-	CSocekt();                                                            //构造函数
-	virtual ~CSocekt();                                                   //释放函数
+	CSocket();                                                            //构造函数
+	virtual ~CSocket();                                                   //释放函数
 	virtual bool Initialize();                                            //初始化函数[父进程中执行]
 	virtual bool Initialize_subproc();                                    //初始化函数[子进程中执行]
 	virtual void Shutdown_subproc();                                      //关闭退出函数[子进程中执行]
@@ -189,11 +189,11 @@ private:
 	struct ThreadItem   
     {
         pthread_t   _Handle;                                              //线程句柄
-        CSocekt     *_pThis;                                              //记录线程池的指针	
+        CSocket     *_pThis;                                              //记录线程池的指针	
         bool        ifrunning;                                            //标记是否正式启动起来，启动起来后，才允许调用StopAll()来释放
 
         //构造函数
-        ThreadItem(CSocekt *pthis):_pThis(pthis),ifrunning(false){}                             
+        ThreadItem(CSocket *pthis):_pThis(pthis),ifrunning(false){}                             
         //析构函数
         ~ThreadItem(){}        
     };

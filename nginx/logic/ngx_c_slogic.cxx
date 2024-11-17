@@ -68,7 +68,7 @@ bool CLogicSocket::Initialize()
 {
     //做一些和本类相关的初始化工作
     //....日后根据需要扩展        
-    bool bParentInit = CSocekt::Initialize();  //调用父类的同名函数
+    bool bParentInit = CSocket::Initialize();  //调用父类的同名函数
     return bParentInit;
 }
 

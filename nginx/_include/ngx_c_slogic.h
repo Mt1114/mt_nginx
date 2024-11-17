@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include "ngx_c_socket.h"
 
-class CLogicSocket : public CSocekt   //继承自父类CScoekt
+class CLogicSocket : public CSocket   //继承自父类CScoekt
 {
 public:
 	CLogicSocket();                                                         //构造函数

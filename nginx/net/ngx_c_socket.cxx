@@ -23,7 +23,7 @@
 
 //--------------------------------------------------------------------------
 //构造函数
-CSocekt::CSocekt()
+CSocket::CSocket()
 {
     //配置相关
     m_worker_connections = 1;      //epoll连接最大项数
@@ -55,7 +55,7 @@ CSocekt::CSocekt()
 
 //初始化函数【fork()子进程之前干这个事】
 //成功返回true，失败返回false
-bool CSocekt::Initialize()
+bool CSocket::Initialize()
 {
     ReadConf();  //读配置项
     if(ngx_open_listening_sockets() == false)  //打开监听端口    
@@ -64,7 +64,7 @@ bool CSocekt::Initialize()
 }
 
 //子进程中才需要执行的初始化函数
-bool CSocekt::Initialize_subproc()
+bool CSocket::Initialize_subproc()
 {
     //发消息互斥量初始化
     if(pthread_mutex_init(&m_sendMessageQueueMutex, NULL)  != 0)
@@ -139,7 +139,7 @@ bool CSocekt::Initialize_subproc()
 
 //--------------------------------------------------------------------------
 //释放函数
-CSocekt::~CSocekt()
+CSocket::~CSocket()
 {
     //释放必须的内存
     //(1)监听端口相关内存的释放--------
@@ -153,7 +153,7 @@ CSocekt::~CSocekt()
 }
 
 //关闭退出函数[子进程中执行]
-void CSocekt::Shutdown_subproc()
+void CSocket::Shutdown_subproc()
 {
     //(1)把干活的线程停止掉，注意 系统应该尝试通过设置 g_stopEvent = 1来 开始让整个项目停止
     //(2)用到信号量的，可能还需要调用一下sem_post
@@ -189,7 +189,7 @@ void CSocekt::Shutdown_subproc()
 }
 
 //清理TCP发送消息队列
-void CSocekt::clearMsgSendQueue()
+void CSocket::clearMsgSendQueue()
 {
 	char * sTmpMempoint;
 	CMemory *p_memory = CMemory::GetInstance();
@@ -203,7 +203,7 @@ void CSocekt::clearMsgSendQueue()
 }
 
 //专门用于读各种配置项
-void CSocekt::ReadConf()
+void CSocket::ReadConf()
 {
     CConfig *p_config = CConfig::GetInstance();
     m_worker_connections      = p_config->GetIntDefault("worker_connections",m_worker_connections);              //epoll连接的最大项数
@@ -224,7 +224,7 @@ void CSocekt::ReadConf()
 
 //监听端口【支持多个端口】，这里遵从nginx的函数命名
 //在创建worker进程之前就要执行这个函数；
-bool CSocekt::ngx_open_listening_sockets()
+bool CSocket::ngx_open_listening_sockets()
 {    
     int                isock;                //socket
     struct sockaddr_in serv_addr;            //服务器的地址结构体
@@ -311,7 +311,7 @@ bool CSocekt::ngx_open_listening_sockets()
 }
 
 //设置socket连接为非阻塞模式【这种函数的写法很固定】：非阻塞，概念在五章四节讲解的非常清楚【不断调用，不断调用这种：拷贝数据的时候是阻塞的】
-bool CSocekt::setnonblocking(int sockfd) 
+bool CSocket::setnonblocking(int sockfd) 
 {    
     int nb=1; //0：清除，1：设置  
     if(ioctl(sockfd, FIONBIO, &nb) == -1) //FIONBIO：设置/清除非阻塞I/O标记：0：清除，1：设置
@@ -323,7 +323,7 @@ bool CSocekt::setnonblocking(int sockfd)
 }
 
 //关闭socket，什么时候用，我们现在先不确定，先把这个函数预备在这里
-void CSocekt::ngx_close_listening_sockets()
+void CSocket::ngx_close_listening_sockets()
 {
     for(int i = 0; i < m_ListenPortCount; i++) //要关闭这么多个监听端口
     {  
@@ -335,7 +335,7 @@ void CSocekt::ngx_close_listening_sockets()
 }
 
 //将一个待发送消息入到发消息队列中
-void CSocekt::msgSend(char *psendbuf) 
+void CSocket::msgSend(char *psendbuf) 
 {
     CMemory *p_memory = CMemory::GetInstance();
 
@@ -378,7 +378,7 @@ void CSocekt::msgSend(char *psendbuf)
 
 //主动关闭一个连接时的要做些善后的处理函数
 //这个函数是可能被多线程调用的，但是即便被多线程调用，也没关系，不影响本服务器程序的稳定性和正确运行性
-void CSocekt::zdClosesocketProc(lpngx_connection_t p_Conn)
+void CSocket::zdClosesocketProc(lpngx_connection_t p_Conn)
 {
     if(m_ifkickTimeCount == 1)
     {
@@ -398,7 +398,7 @@ void CSocekt::zdClosesocketProc(lpngx_connection_t p_Conn)
 }
 
 //测试是否flood攻击成立，成立则返回true，否则返回false
-bool CSocekt::TestFlood(lpngx_connection_t pConn)
+bool CSocket::TestFlood(lpngx_connection_t pConn)
 {
     struct  timeval sCurrTime;   //当前时间结构
 	uint64_t        iCurrTime;   //当前时间（单位：毫秒）
@@ -430,7 +430,7 @@ bool CSocekt::TestFlood(lpngx_connection_t pConn)
 }
 
 //打印统计信息
-void CSocekt::printTDInfo()
+void CSocket::printTDInfo()
 {
     //return;
     time_t currtime = time(NULL);
@@ -459,7 +459,7 @@ void CSocekt::printTDInfo()
 
 //--------------------------------------------------------------------
 //(1)epoll功能初始化，子进程中进行 ，本函数被ngx_worker_process_init()所调用
-int CSocekt::ngx_epoll_init()
+int CSocket::ngx_epoll_init()
 {
     //(1)很多内核版本不处理epoll_create的参数，只要该参数>0即可
     //创建一个epoll对象，创建了一个红黑树，还创建了一个双向链表
@@ -490,7 +490,7 @@ int CSocekt::ngx_epoll_init()
 
 
         //对监听端口的读事件设置处理方法，因为监听端口是用来等对方连接的发送三路握手的，所以监听端口关心的就是读事件
-        p_Conn->rhandler = &CSocekt::ngx_event_accept;
+        p_Conn->rhandler = &CSocket::ngx_event_accept;
 
         //往监听socket上增加监听事件，从而开始让监听端口履行其职责【如果不加这行，虽然端口能连上，但不会触发ngx_epoll_process_events()里边的epoll_wait()往下走】
 
@@ -510,7 +510,7 @@ int CSocekt::ngx_epoll_init()
 
 //对epoll事件的具体操作
 //返回值：成功返回1，失败返回-1；
-int CSocekt::ngx_epoll_oper_event(
+int CSocket::ngx_epoll_oper_event(
                         int                fd,               //句柄，一个socket
                         uint32_t           eventtype,        //事件类型，一般是EPOLL_CTL_ADD，EPOLL_CTL_MOD，EPOLL_CTL_DEL ，说白了就是操作epoll红黑树的节点(增加，修改，删除)
                         uint32_t           flag,             //标志，具体含义取决于eventtype
@@ -572,7 +572,7 @@ int CSocekt::ngx_epoll_oper_event(
 //参数unsigned int timer：epoll_wait()阻塞的时长，单位是毫秒；
 //返回值，1：正常返回  ,0：有问题返回，一般不管是正常还是问题返回，都应该保持进程继续运行
 //本函数被ngx_process_events_and_timers()调用，而ngx_process_events_and_timers()是在子进程的死循环中被反复调用
-int CSocekt::ngx_epoll_process_events(int timer) 
+int CSocket::ngx_epoll_process_events(int timer) 
 {   
     //等待事件，事件会返回到m_events里，最多返回NGX_MAX_EVENTS个事件【因为我只提供了这些内存】；
     //如果两次调用epoll_wait()的事件间隔比较长，则可能在epoll的双向链表中，积累了多个事件，所以调用epoll_wait，可能取到多个事件
@@ -656,10 +656,10 @@ int CSocekt::ngx_epoll_process_events(int timer)
 
 //--------------------------------------------------------------------
 //处理发送消息队列的线程
-void* CSocekt::ServerSendQueueThread(void* threadData)
+void* CSocket::ServerSendQueueThread(void* threadData)
 {    
     ThreadItem *pThread = static_cast<ThreadItem*>(threadData);
-    CSocekt *pSocketObj = pThread->_pThis;
+    CSocket *pSocketObj = pThread->_pThis;
     int err;
     std::list <char *>::iterator pos,pos2,posend;
     

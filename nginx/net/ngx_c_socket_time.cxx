@@ -22,7 +22,7 @@
 #include "ngx_c_lockmutex.h"
 
 //设置踢出时钟(向multimap表中增加内容)，用户三次握手成功连入，然后我们开启了踢人开关【Sock_WaitTimeEnable = 1】，那么本函数被调用；
-void CSocekt::AddToTimerQueue(lpngx_connection_t pConn)
+void CSocket::AddToTimerQueue(lpngx_connection_t pConn)
 {
     CMemory *p_memory = CMemory::GetInstance();
 
@@ -40,7 +40,7 @@ void CSocekt::AddToTimerQueue(lpngx_connection_t pConn)
 }
 
 //从multimap中取得最早的时间返回去，调用者负责互斥，所以本函数不用互斥，调用者确保m_timeQueuemap中一定不为空
-time_t CSocekt::GetEarliestTime()
+time_t CSocket::GetEarliestTime()
 {
     std::multimap<time_t, LPSTRUC_MSG_HEADER>::iterator pos;	
 	pos = m_timerQueuemap.begin();		
@@ -48,7 +48,7 @@ time_t CSocekt::GetEarliestTime()
 }
 
 //从m_timeQueuemap移除最早的时间，并把最早这个时间所在的项的值所对应的指针 返回，调用者负责互斥，所以本函数不用互斥，
-LPSTRUC_MSG_HEADER CSocekt::RemoveFirstTimer()
+LPSTRUC_MSG_HEADER CSocket::RemoveFirstTimer()
 {
 	std::multimap<time_t, LPSTRUC_MSG_HEADER>::iterator pos;	
 	LPSTRUC_MSG_HEADER p_tmp;
@@ -65,7 +65,7 @@ LPSTRUC_MSG_HEADER CSocekt::RemoveFirstTimer()
 
 //根据给的当前时间，从m_timeQueuemap找到比这个时间更老（更早）的节点【1个】返回去，这些节点都是时间超过了，要处理的节点
 //调用者负责互斥，所以本函数不用互斥
-LPSTRUC_MSG_HEADER CSocekt::GetOverTimeTimer(time_t cur_time)
+LPSTRUC_MSG_HEADER CSocket::GetOverTimeTimer(time_t cur_time)
 {	
 	CMemory *p_memory = CMemory::GetInstance();
 	LPSTRUC_MSG_HEADER ptmp;
@@ -102,7 +102,7 @@ LPSTRUC_MSG_HEADER CSocekt::GetOverTimeTimer(time_t cur_time)
 }
 
 //把指定用户tcp连接从timer表中抠出去
-void CSocekt::DeleteFromTimerQueue(lpngx_connection_t pConn)
+void CSocket::DeleteFromTimerQueue(lpngx_connection_t pConn)
 {
     std::multimap<time_t, LPSTRUC_MSG_HEADER>::iterator pos,posend;
 	CMemory *p_memory = CMemory::GetInstance();
@@ -131,7 +131,7 @@ lblMTQM:
 }
 
 //清理时间队列中所有内容
-void CSocekt::clearAllFromTimerQueue()
+void CSocket::clearAllFromTimerQueue()
 {	
 	std::multimap<time_t, LPSTRUC_MSG_HEADER>::iterator pos,posend;
 
@@ -147,10 +147,10 @@ void CSocekt::clearAllFromTimerQueue()
 }
 
 //时间队列监视和处理线程，处理到期不发心跳包的用户踢出的线程
-void* CSocekt::ServerTimerQueueMonitorThread(void* threadData)
+void* CSocket::ServerTimerQueueMonitorThread(void* threadData)
 {
     ThreadItem *pThread = static_cast<ThreadItem*>(threadData);
-    CSocekt *pSocketObj = pThread->_pThis;
+    CSocket *pSocketObj = pThread->_pThis;
 
     time_t absolute_time,cur_time;
     int err;
@@ -194,7 +194,7 @@ void* CSocekt::ServerTimerQueueMonitorThread(void* threadData)
 }
 
 //心跳包检测时间到，该去检测心跳包是否超时的事宜，本函数只是把内存释放，子类应该重新事先该函数以实现具体的判断动作
-void CSocekt::procPingTimeOutChecking(LPSTRUC_MSG_HEADER tmpmsg,time_t cur_time)
+void CSocket::procPingTimeOutChecking(LPSTRUC_MSG_HEADER tmpmsg,time_t cur_time)
 {
 	CMemory *p_memory = CMemory::GetInstance();
 	p_memory->FreeMemory(tmpmsg);    
